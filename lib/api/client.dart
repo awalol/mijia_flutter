@@ -1,8 +1,5 @@
 import 'dart:convert';
-import 'dart:ffi';
 import 'dart:io';
-
-import 'package:dio/dio.dart';
 
 class MijiaClient {
   late String deviceId;
@@ -10,7 +7,7 @@ class MijiaClient {
   late String serviceToken;
   late String securityToken;
   late String passToken;
-  late Dio client;
+  late HttpClient client = HttpClient();
 
   MijiaClient(Map authData) {
     deviceId = authData["deviceId"];
@@ -18,29 +15,28 @@ class MijiaClient {
     serviceToken = authData["serviceToken"];
     securityToken = authData["securityToken"];
     passToken = authData["passToken"];
-
-    client = Dio(
-      BaseOptions(
-        baseUrl: "https://api.io.mi.com/app",
-        headers: {
-          "User-Agent":
-              "APP/com.xiaomi.mihome APPV/6.0.103 iosPassportSDK/3.9.0 iOS/14.4 miHSTS",
-          "x-xiaomi-protocal-flag-cli": "PROTOCAL-HTTP2",
-          "Cookie":
-              "PassportDeviceId=$deviceId;userId=$userId;serviceToken=$serviceToken;",
-        },
-      ),
-    );
   }
 
   Future<Map> getUserInfo() async {
-    final response = await client.getUri(
+    HttpClient client = HttpClient();
+    HttpClientRequest request = await client.getUrl(
       Uri.parse(
-        "https://account.xiaomi.com/pass2/profile/home?userId=2300736747",
+        "https://account.xiaomi.com/pass2/profile/home?userId=$userId",
       ),
     );
+    request.headers.set(
+      "User-Agent",
+      "APP/com.xiaomi.mihome APPV/6.0.103 iosPassportSDK/3.9.0 iOS/14.4 miHSTS",
+    );
+    // request.cookies.add(Cookie("PassportDeviceId",deviceId));
+    request.cookies.add(Cookie("userId",userId.toString()));
+    // request.cookies.add(Cookie("serviceToken",serviceToken));
+    request.cookies.add(Cookie("passToken", passToken));
+    HttpClientResponse response = await request.close();
     try {
-      var result = jsonDecode(response.data.toString().substring(11));
+      var result = jsonDecode(
+        (await response.transform(utf8.decoder).join()).substring(11),
+      );
       return result["data"];
     } catch (e) {
       throw Exception("登录过期");

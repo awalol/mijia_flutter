@@ -114,8 +114,8 @@ class _MyHomePageState extends State<MyHomePage> {
             child: Text("加载登录信息"),
           ),
           TextButton(
-            onPressed: () {
-              var userInfo = MijiaClient(authData).getUserInfo();
+            onPressed: () async {
+              var userInfo = await MijiaClient(authData).getUserInfo();
               logger.d(userInfo);
             },
             child: Text("获取用户信息"),

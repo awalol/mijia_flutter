@@ -4,11 +4,7 @@ import 'dart:io';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
-import 'package:dio_cookie_manager/dio_cookie_manager.dart';
-
 import 'package:flutter/material.dart';
-import 'package:mijia_flutter/api/client.dart';
-
 import '../main.dart';
 import '../utils/RandomUtil.dart';
 
@@ -17,45 +13,46 @@ class MijiaLogin {
 
   static Future<Map> loginByQrCode(BuildContext context) async {
     // 发起登录
-    final client = Dio();
+    final client = HttpClient();
+    client.userAgent = "APP/com.xiaomi.mihome APPV/6.0.103 iosPassportSDK/3.9.0 iOS/14.4 miHSTS";
     // 使用Dio会出现 Unhandled Exception: DioException [unknown]: null 但是在其他的URL无法复现
-    var request = await HttpClient().getUrl(
+    var request = await client.getUrl(
       Uri.parse(
         "https://account.xiaomi.com/pass/serviceLogin?sid=xiaomiio&_json=true",
       ),
     );
-    request.headers.set(
-      "User-Agent",
-      "APP/com.xiaomi.mihome APPV/6.0.103 iosPassportSDK/3.9.0 iOS/14.4 miHSTS",
-    );
+    var response = await request.close();
     var result = jsonDecode(
-      (await (await request.close()).transform(utf8.decoder).join()).substring(
-        11,
-      ),
+      (await (response).transform(utf8.decoder).join()).substring(11),
     );
     logger.d("serviceLogin: $result");
 
     // 获取登录二维码
-    var response = await client.get(
-      "https://account.xiaomi.com/longPolling/loginUrl",
-      queryParameters: {
-        '_qrsize': "360",
-        'qs': result["qs"],
-        'bizDeviceType': '',
-        'callback': result['callback'],
-        '_json': 'true',
-        'theme': '',
-        'sid': 'xiaomiio',
-        'needTheme': 'false',
-        'showActiveX': 'false',
-        'serviceParam':
-            Uri.parse(result["location"]).queryParameters["serviceParam"] ?? '',
-        '_local': 'zh_CN',
-        '_sign': result['_sign'],
-        '_dc': DateTime.now().millisecondsSinceEpoch.toString(),
-      },
+    final params = {
+      '_qrsize': "360",
+      'qs': result["qs"],
+      'bizDeviceType': '',
+      'callback': result['callback'],
+      '_json': 'true',
+      'theme': '',
+      'sid': 'xiaomiio',
+      'needTheme': 'false',
+      'showActiveX': 'false',
+      'serviceParam':
+          Uri.parse(result["location"]).queryParameters["serviceParam"] ?? '',
+      '_local': 'zh_CN',
+      '_sign': result['_sign'],
+      '_dc': DateTime.now().millisecondsSinceEpoch.toString(),
+    };
+    request = await client.getUrl(
+      Uri.parse(
+        "https://account.xiaomi.com/longPolling/loginUrl",
+      ).replace(queryParameters: params),
     );
-    result = jsonDecode(response.data.toString().substring(11));
+    response = await request.close();
+    result = jsonDecode(
+      (await (response).transform(utf8.decoder).join()).substring(11),
+    );
     logger.d("loginUrl: $result");
 
     // 显示二维码
@@ -91,15 +88,11 @@ class MijiaLogin {
 
     // 等待登录结果
     try {
-      response = await client.get(
-        result["lp"],
-        options: Options(receiveTimeout: const Duration(seconds: 60)),
-      );
-    } on DioException catch (e) {
+      request = await client.getUrl(Uri.parse(result["lp"]));
+      response = await request.close().timeout(Duration(seconds: 60));
+    } on TimeoutException catch (e) {
       client.close();
-      if (e.type == DioExceptionType.receiveTimeout) {
-        logger.e("lp: 二维码超时 ${e.message}");
-      }
+      logger.e("lp: 二维码超时 ${e.message}");
       rethrow;
     }
     if (context.mounted) {
@@ -110,7 +103,9 @@ class MijiaLogin {
       logger.e("lp: ${response.statusCode}");
       throw Exception("lp: 用户取消 ${response.statusCode}");
     }
-    result = jsonDecode(response.data.toString().substring(11));
+    result = jsonDecode(
+      (await (response).transform(utf8.decoder).join()).substring(11),
+    );
     logger.d("lp: $result");
     if (result["code"] != 0) {
       final code = data["code"] = result["code"];
@@ -125,12 +120,40 @@ class MijiaLogin {
     final passToken = result["passToken"];
     final cUserId = result["cUserId"];
 
+    // // 神奇小米，无法正常解析Set-Cookie，需手动拼接
+    // final setCookies = response.headers['set-cookie'];
+    // List<Cookie> cookies = [];
+    // var stringBuilder = "";
+    // if(setCookies != null){
+    //   for(var i = 0;i < setCookies.length;i++){
+    //     if(i % 2 == 1){
+    //       cookies.add(Cookie.fromSetCookieValue("$stringBuilder ${setCookies[i]}"));
+    //       stringBuilder = "";
+    //     }else{
+    //       stringBuilder += setCookies[i];
+    //     }
+    //   }
+    // }
+
     // --------------------------------------------
     final n = "nonce=$nonce&$securityToken";
     final clientSign = Uri.encodeComponent(
       base64Encode(sha1.convert(utf8.encode(n)).bytes),
     );
-    response = await client.get("$location&clientSign=$clientSign");
+    logger.d("$location&clientSign=$clientSign");
+    request = await client.getUrl(
+      Uri.parse("$location&clientSign=$clientSign"),
+    );
+    response = await request.close();
+
+    final setCookies = response.headers['set-cookie'];
+    if(setCookies == null){
+      throw Exception("serviceToken fail");
+    }
+    for(var setCookie in setCookies){
+      final cookie = Cookie.fromSetCookieValue(setCookie);
+      data[cookie.name] = cookie.value;
+    }
     data["userId"] = userId;
     data["securityToken"] = securityToken;
     data["deviceId"] = RandomUtil.random(16);
