@@ -1,12 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:cookie_jar/cookie_jar.dart';
 import 'package:crypto/crypto.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../main.dart';
-import '../utils/RandomUtil.dart';
+import '../utils.dart';
 
 class MijiaLogin {
   static var data = {};
@@ -156,7 +154,7 @@ class MijiaLogin {
     }
     data["userId"] = userId;
     data["securityToken"] = securityToken;
-    data["deviceId"] = RandomUtil.random(16);
+    data["deviceId"] = random(16);
     data["passToken"] = passToken;
     data["cUserId"] = cUserId;
     client.close();

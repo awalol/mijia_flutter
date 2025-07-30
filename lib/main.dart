@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:mijia_flutter/api/client.dart';
 import 'package:mijia_flutter/api/login.dart';
+import 'package:mijia_flutter/widgets/DeviceWidget.dart';
 
 final logger = Logger();
 
@@ -98,28 +99,47 @@ class _MyHomePageState extends State<MyHomePage> {
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
-      body: Flex(
-        direction: Axis.horizontal,
+      body: Column(
         children: [
-          TextButton(
-            onPressed: () => MijiaLogin.loginByQrCode(context),
-            child: Text("扫码登录"),
+          Flex(
+            direction: Axis.horizontal,
+            children: [
+              TextButton(
+                onPressed: () => MijiaLogin.loginByQrCode(context),
+                child: Text("扫码登录"),
+              ),
+              TextButton(
+                onPressed: () => MijiaLogin.saveAuthData(),
+                child: Text("保存登录信息"),
+              ),
+              TextButton(
+                onPressed: () async =>
+                    authData = await MijiaLogin.loadAuthData(),
+                child: Text("加载登录信息"),
+              ),
+              TextButton(
+                onPressed: () async {
+                  final userInfo = await MijiaClient(authData).getUserInfo();
+                  logger.d(userInfo);
+                },
+                child: Text("获取用户信息"),
+              ),
+              TextButton(
+                onPressed: () async {
+                  final deviceList = await MijiaClient(
+                    authData,
+                  ).getDeviceList();
+                  logger.d(deviceList);
+                },
+                child: Text("获取全部设备列表"),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => MijiaLogin.saveAuthData(),
-            child: Text("保存登录信息"),
-          ),
-          TextButton(
-            onPressed: () async => authData = await MijiaLogin.loadAuthData(),
-            child: Text("加载登录信息"),
-          ),
-          TextButton(
-            onPressed: () async {
-              var userInfo = await MijiaClient(authData).getUserInfo();
-              logger.d(userInfo);
-            },
-            child: Text("获取用户信息"),
-          ),
+          Column(
+            children: [
+              DeviceWidget(did: '')
+            ],
+          )
         ],
       ),
       floatingActionButton: FloatingActionButton(
