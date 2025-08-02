@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:mijia_flutter/main.dart';
 import 'package:mijia_flutter/widgets/BoolWidget.dart';
 
+import 'FloatWidget.dart';
+
 class DeviceWidget extends StatefulWidget {
   final String did;
   final Map authData;
@@ -50,6 +52,8 @@ class _DeviceWidgetState extends State<DeviceWidget> {
       switch (prop["type"]) {
         case "bool":
           return _buildBoolPropertyWidget(prop);
+        case "float":
+          return _buildFloatPropertyWidget(prop);
         default:
           return _buildDefaultPropertyWidget(prop);
       }
@@ -59,7 +63,14 @@ class _DeviceWidgetState extends State<DeviceWidget> {
   Widget _buildBoolPropertyWidget(Map<String, dynamic> prop) {
     return Container(
       padding: _horizontalPadding,
-      child: BoolWidget(did: widget.did, prop: prop),
+      child: BoolWidget(did: widget.did,property: prop,),
+    );
+  }
+
+  Widget _buildFloatPropertyWidget(Map<String, dynamic> prop) {
+    return Container(
+      padding: _horizontalPadding,
+      child: FloatWidget(did: widget.did, prop: prop),
     );
   }
 

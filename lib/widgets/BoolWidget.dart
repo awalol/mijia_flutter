@@ -1,31 +1,62 @@
 import 'package:flutter/material.dart';
-
 import '../main.dart';
 
-class BoolWidget extends StatefulWidget{
+class BoolWidget extends StatefulWidget {
   final String did;
-  final Map prop;
-  const BoolWidget({super.key,required this.did,required this.prop});
+  final Map<String, dynamic> property;
+
+  const BoolWidget({
+    super.key,
+    required this.did,
+    required this.property,
+  });
 
   @override
   State<StatefulWidget> createState() => _BoolWidgetState();
 }
 
-class _BoolWidgetState extends State<BoolWidget>{
+class _BoolWidgetState extends State<BoolWidget> {
   bool _isSwitched = false;
+  static const TextStyle _propertyTextStyle = TextStyle(fontSize: 16);
 
   @override
   void initState() {
     super.initState();
-    _initProp();
+    _initProperty();
   }
 
-  void _initProp() async{
-    final currentProp = await client.getProp(widget.did, widget.prop["method"]["siid"], widget.prop["method"]["piid"]);
-    logger.d(currentProp);
+  void _initProperty() async {
+    final method = widget.property["method"];
+    final propertyResult = await client.getProp(
+      widget.did,
+      method["siid"],
+      method["piid"],
+    );
+    logger.d(propertyResult);
     setState(() {
-      _isSwitched = currentProp["result"][0]["value"];
+      _isSwitched = propertyResult["result"][0]["value"];
     });
+  }
+
+  Widget _buildSwitch() {
+    final method = widget.property["method"];
+    return Switch(
+      value: _isSwitched,
+      onChanged: (value) async {
+        final result = await client.setProp(
+          widget.did,
+          method["siid"],
+          method["piid"],
+          value,
+        );
+        logger.d(result);
+        if (result["result"][0]["code"] == 0) {
+          setState(() {
+            _isSwitched = value;
+          });
+        }
+      },
+    );
   }
 
   @override
@@ -33,23 +64,13 @@ class _BoolWidgetState extends State<BoolWidget>{
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(widget.prop["desc"], style: TextStyle(fontSize: 16)),
-        Spacer(),
-        Switch(
-          value: _isSwitched,
-          onChanged: (value) async{
-
-            final result = await client.setProp(widget.did, widget.prop["method"]["siid"], widget.prop["method"]["piid"], value);
-            logger.d(result);
-            if(result["result"][0]["code"] == 0){
-              setState(() {
-                _isSwitched = value;
-              });
-            }
-          },
+        Text(
+          widget.property["desc"],
+          style: _propertyTextStyle,
         ),
+        Spacer(),
+        _buildSwitch(),
       ],
     );
   }
-
 }
