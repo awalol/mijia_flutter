@@ -12,7 +12,7 @@ class FloatWidget extends StatefulWidget{
 class _FloatWidgetState extends State<FloatWidget>{
   @override
   Widget build(BuildContext context) {
-
+    return(Text("hi"));
   }
 
 }
