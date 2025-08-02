@@ -5,6 +5,7 @@ import 'package:mijia_flutter/api/login.dart';
 import 'package:mijia_flutter/widgets/DeviceWidget.dart';
 
 final logger = Logger();
+late MijiaClient client;
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -64,7 +65,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  Map authData = {};
+  List<Widget> deviceWidgets = [];
 
   Future<void> _incrementCounter(BuildContext context) async {
     // var result = await MijiaLogin(context).loginByQrCode();
@@ -76,13 +78,11 @@ class _MyHomePageState extends State<MyHomePage> {
       // so that the display can reflect the updated values. If we changed
       // _counter without calling setState(), then the build method would not be
       // called again, and so nothing would appear to happen.
-      _counter++;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    Map authData = {};
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
     //
@@ -113,33 +113,46 @@ class _MyHomePageState extends State<MyHomePage> {
                 child: Text("保存登录信息"),
               ),
               TextButton(
-                onPressed: () async =>
-                    authData = await MijiaLogin.loadAuthData(),
+                onPressed: () async {
+                  authData = await MijiaLogin.loadAuthData();
+                  client = MijiaClient(authData);
+                },
                 child: Text("加载登录信息"),
               ),
               TextButton(
                 onPressed: () async {
-                  final userInfo = await MijiaClient(authData).getUserInfo();
+                  final userInfo = await client.getUserInfo();
                   logger.d(userInfo);
                 },
                 child: Text("获取用户信息"),
               ),
               TextButton(
                 onPressed: () async {
-                  final deviceList = await MijiaClient(
-                    authData,
-                  ).getDeviceList();
-                  logger.d(deviceList);
+                  final deviceList = await client.getDeviceList();
+                  final list = deviceList["result"]["list"];
+                  for (final device in list) {
+                    logger.d(device["did"]);
+                    logger.d(device["model"]);
+                    setState(() {
+                      deviceWidgets.add(
+                        DeviceWidget(
+                          did: device["did"],
+                          authData: authData,
+                          model: device["model"],
+                        ),
+                      );
+                    });
+                  }
                 },
                 child: Text("获取全部设备列表"),
               ),
             ],
           ),
-          Column(
-            children: [
-              DeviceWidget(did: '')
-            ],
-          )
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(children: deviceWidgets),
+            ),
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
