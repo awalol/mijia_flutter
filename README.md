@@ -8,6 +8,13 @@
 
 ~~能用就行~~
 
+# 未来目标
+[ ] 优化UI，为设备定制操控页面
+
+[ ] 错误处理
+
+[ ] 优化代码可读性
+
 # 致谢
 本项目API大量参考如下项目
 - [Do1e/mijia-api](https://github.com/Do1e/mijia-api)
