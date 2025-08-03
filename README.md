@@ -1,16 +1,9 @@
-# mijia_flutter
+# mijia_flutter 米家 Flutter 版
 
-A new Flutter project.
+为Desktop平台设计
 
-## Getting Started
+💩山代码
 
-This project is a starting point for a Flutter application.
+启动需手动登录
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+~~能用就行~~

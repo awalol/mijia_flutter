@@ -3,7 +3,7 @@ import '../main.dart';
 
 class BoolWidget extends StatefulWidget {
   final String did;
-  final Map<String, dynamic> property;
+  final Map property;
 
   const BoolWidget({
     super.key,

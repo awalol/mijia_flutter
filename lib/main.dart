@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:mijia_flutter/api/client.dart';
@@ -40,6 +42,7 @@ class MyApp extends StatelessWidget {
         // This works for code too, not just values: Most code changes can be
         // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        fontFamily: Platform.isWindows ? "微软雅黑" : null
       ),
       home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
@@ -128,6 +131,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               TextButton(
                 onPressed: () async {
+                  deviceWidgets.clear();
                   final deviceList = await client.getDeviceList();
                   final list = deviceList["result"]["list"];
                   for (final device in list) {
